@@ -1,5 +1,10 @@
 import sys
 
+BATTERY_STR = "The battery must be on."
+CONTINUE_STR = "Do you want to continue?"
+BOTTLE_STR = "The water bottle is empty."
+FILL_STR = "Do you want to fill?"
+
 
 def get_valid_input(input_string, valid_options):
     input_string += f"({', '.join(valid_options)}) "
@@ -156,13 +161,9 @@ class SimulationClass:
             self.wiper.display()
 
         else:
-            print(
-                """=======================\nThe battery must be on.\n======================="""
+            continue_fun(
+                BATTERY_STR, CONTINUE_STR, self.run, self.finish,
             )
-            if get_valid_input("Do you want to continue?", ("yes", "no")) == "yes":
-                self.run()
-            else:
-                self.finish()
 
     def run(self):
         valid_prompt = ("1", "2", "3", "4", "5", "0")
@@ -180,10 +181,7 @@ class SimulationClass:
         self.battery.state = get_valid_input("The battery state is?", ("on", "off"))
         while self.battery.is_working() != "on":
             continue_fun(
-                "The battery must be on.",
-                "Do you want to continue?",
-                self.run,
-                self.finish,
+                BATTERY_STR, CONTINUE_STR, self.run, self.finish,
             )
 
         # if the battery is on, so the ECU and wiper are on.
@@ -225,19 +223,12 @@ class SimulationClass:
                 self.pump.display()
             else:
                 continue_fun(
-                    "The water bottle is empty.",
-                    "Do you want to fill?",
-                    self.watter_bottle.fill,
-                    self.run,
+                    BOTTLE_STR, FILL_STR, self.watter_bottle.fill, self.run,
                 )
 
         else:
             self.battery.state = continue_fun(
-                "The battery must be on.",
-                "Do you want to continue?",
-                self.run,
-                self.finish,
-                True,
+                BATTERY_STR, CONTINUE_STR, self.run, self.finish, True,
             )
 
     @decorator_function
