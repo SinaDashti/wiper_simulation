@@ -19,6 +19,16 @@ def decorator_function(original_function):
     return wrapper_function
 
 
+def continue_fun(main_error, continue_str, fun1, fun2, wash=False):
+    print(f"=======================\n{main_error}\n=======================")
+    if get_valid_input(f"{continue_str}", ("yes", "no")) == "yes":
+        if wash:
+            return get_valid_input("Which battery state? ", ("on", "off"))
+        fun1()
+    else:
+        fun2()
+
+
 class Component:
     def __init__(self, state="off"):
         self.state = state
@@ -137,14 +147,22 @@ class SimulationClass:
 
     @decorator_function
     def check(self, myfunc):
-        # self.ecu.state = self.battery.is_working()
+        self.ecu.state = self.battery.is_working()
         if self.ecu.state != "off":
-            # self.ecu.state = self.switch.get_state()
-            # self.wiper.state = self.battery.is_working()
-            # self.wiper.working = self.ecu.state
-            myfunc()
+            self.wiper.state = self.ecu.is_working()
+            self.switch.state = myfunc()
+            self.ecu.state = self.switch.get_state()
+            self.wiper.working = self.ecu.is_working()
+            self.wiper.display()
+
         else:
-            print(f"the Battery/ECU mode is {self.ecu.is_working()}.")
+            print(
+                """=======================\nThe battery must be on.\n======================="""
+            )
+            if get_valid_input("Do you want to continue?", ("yes", "no")) == "yes":
+                self.run()
+            else:
+                self.finish()
 
     def run(self):
         valid_prompt = ("1", "2", "3", "4", "5", "0")
@@ -161,13 +179,12 @@ class SimulationClass:
         )
         self.battery.state = get_valid_input("The battery state is?", ("on", "off"))
         while self.battery.is_working() != "on":
-            print(
-                """=======================\nThe battery must be on.\n======================="""
+            continue_fun(
+                "The battery must be on.",
+                "Do you want to continue?",
+                self.run,
+                self.finish,
             )
-            if get_valid_input("Do you want to continue?", ("yes", "no")) == "yes":
-                self.run()
-            else:
-                self.finish()
 
         # if the battery is on, so the ECU and wiper are on.
         self.ecu.state = self.battery.is_working()
@@ -184,41 +201,11 @@ class SimulationClass:
 
     @decorator_function
     def move_up(self):
-        self.ecu.state = self.battery.is_working()
-        if self.ecu.state != "off":
-            self.wiper.state = self.ecu.is_working()
-            self.switch.state = self.switch.move_up()
-            self.ecu.state = self.switch.get_state()
-            self.wiper.working = self.ecu.is_working()
-            self.wiper.display()
-
-        else:
-            print(
-                """=======================\nThe battery must be on.\n======================="""
-            )
-            if get_valid_input("Do you want to continue?", ("yes", "no")) == "yes":
-                self.run()
-            else:
-                self.finish()
+        self.check(self.switch.move_up)
 
     @decorator_function
     def move_down(self):
-        self.ecu.state = self.battery.is_working()
-        if self.ecu.state != "off":
-            self.wiper.state = self.ecu.is_working()
-            self.switch.state = self.switch.move_down()
-            self.ecu.state = self.switch.get_state()
-            self.wiper.working = self.ecu.is_working()
-            self.wiper.display()
-
-        else:
-            print(
-                """=======================\nThe battery must be on.\n======================="""
-            )
-            if get_valid_input("Do you want to continue?", ("yes", "no")) == "yes":
-                self.run()
-            else:
-                self.finish()
+        self.check(self.switch.move_down)
 
     @decorator_function
     def get_state(self):
@@ -237,26 +224,21 @@ class SimulationClass:
                 self.watter_bottle.extract()
                 self.pump.display()
             else:
-                print(
-                    """=======================\nThe water bottle is empty.\n======================="""
+                continue_fun(
+                    "The water bottle is empty.",
+                    "Do you want to fill?",
+                    self.watter_bottle.fill,
+                    self.run,
                 )
-                if get_valid_input("Do you want to fill?", ("yes", "no")) == "yes":
-                    self.watter_bottle.fill()
-                else:
-                    self.run()
 
         else:
-
-            print(
-                """=======================\nThe battery must be on.\n======================="""
+            self.battery.state = continue_fun(
+                "The battery must be on.",
+                "Do you want to continue?",
+                self.run,
+                self.finish,
+                True,
             )
-            if get_valid_input("Do you want to continue?", ("yes", "no")) == "yes":
-                self.battery.state = get_valid_input(
-                    "Which battery state? ", ("on", "off")
-                )
-                self.run()
-            else:
-                self.finish()
 
     @decorator_function
     def finish(self):
