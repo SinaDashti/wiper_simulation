@@ -28,54 +28,39 @@ class Component:
 
 
 class Switch:
-
-    map_values = {"off": 0, "intermittent": 1, "wipe": 2, "fast-wipe": 3}
+    map_values = ["off", "intermittent", "wipe", "fast-wipe"]
     current_value = 0
 
     def __init__(self, state="off"):
-        # self.map_values = {"off": 0, "intermittent": 1, "wipe": 2, "fast-wipe": 3, "wash": 4}
         self.state = state
-        # print('alan')
-        # self.__current_value = self.map_values[state]
+
 
     def get_state(self):
-        # for keys in self.map_values.keys():
-        #     if self.state == keys:
-        #         # print(self.map_values[self.state])
-        #         # self.__current_value = self.map_values[self.state]
-        #         # print(self.__current_value)
-        #         return self.map_values[self.state]
-        #     # else:
-        #     #     print('pashm', keys)
-        # # x = list(self.map_values.keys())[list(self.map_values.values()).index(self.state)]
-        # # print(x)
         return self.state
 
-    # def move_up(self):
-    #     Switch.current_value = Switch.map_values[self.state]
-    #     print('in swi',Switch.current_value, Switch.map_values[self.state])
-    #     print(type(Switch.current_value), Switch.current_value+1)
-    #     # print('in fun',self.__current_value)
-    #     if Switch.current_value < 4:
-    #         print("move up".upper())
-    #         Switch.current_value += 1
-    #         print('final', Switch.current_value+1)
-    #         # self.state =
-    #     else:
-    #         print(f"The switch cannot move up more.({self.state})")
+    def move_up(self):
+        try:
+            Switch.current_value +=1
+            self.state = Switch.map_values[Switch.current_value]
+        except IndexError:
+            print("The switch cannot move up more.(switch current mode: fast-wipe)")
+            return Switch.map_values[-1]
+        else:
+            return Switch.map_values[Switch.current_value]
 
-    # @decorator_function
-    # def move_down(self):
-    #     Switch.current_value = Switch.map_values[self.state]
-    #     if Switch.current_value > 0:
-    #         print("move down".upper())
-    #         Switch.current_value -= 1
-    #     else:
-    #         print(f"The switch cannot move down more.({self.state})")
+    def move_down(self):
+        try:
+            if Switch.current_value > 0:
+                Switch.current_value -= 1
+                self.state = Switch.map_values[Switch.current_value]
+            else:
+                raise ValueError
+        except ValueError:
+            print("The switch cannot move down more.(switch current mode: off)")
+            return Switch.map_values[0]
+        else:
+            return Switch.map_values[Switch.current_value]
 
-    # # @decorator_function
-    # def wash(self):
-    #     print("wash".upper())
 
 
 class WiperMotor(Component):
@@ -193,7 +178,7 @@ class SimulationClass:
         # the the ECU gets the switch state.
         self.ecu.state = self.switch.get_state()
 
-        Switch.current_value = Switch.map_values[self.ecu.is_working()]
+        Switch.current_value = Switch.map_values.index(self.ecu.is_working())
         self.wiper.working = self.ecu.is_working()
 
         self.wiper.display()
@@ -203,18 +188,10 @@ class SimulationClass:
         self.ecu.state = self.battery.is_working()
         if self.ecu.state != "off":
             self.wiper.state = self.ecu.is_working()
+            self.switch.state = self.switch.move_up()
             self.ecu.state = self.switch.get_state()
-            if Switch.current_value < 3:
-                Switch.current_value += 1
-                self.ecu.state = list(Switch.map_values.keys())[
-                    list(Switch.map_values.values()).index(Switch.current_value)
-                ]
-                self.wiper.working = self.ecu.is_working()
-                self.wiper.display()
-            else:
-                print(
-                    f"The switch cannot move up more.(switch current mode: fast-wipe)"
-                )
+            self.wiper.working = self.ecu.is_working()
+            self.wiper.display()
 
         else:
             print(
@@ -227,20 +204,13 @@ class SimulationClass:
 
     @decorator_function
     def move_down(self):
-        #     self.check(self.switch.move_down)
         self.ecu.state = self.battery.is_working()
         if self.ecu.state != "off":
             self.wiper.state = self.ecu.is_working()
+            self.switch.state = self.switch.move_down()
             self.ecu.state = self.switch.get_state()
-            if Switch.current_value > 0:
-                Switch.current_value -= 1
-                self.ecu.state = list(Switch.map_values.keys())[
-                    list(Switch.map_values.values()).index(Switch.current_value)
-                ]
-                self.wiper.working = self.ecu.is_working()
-                self.wiper.display()
-            else:
-                print(f"The switch cannot move down more.(switch current mode: off)")
+            self.wiper.working = self.ecu.is_working()
+            self.wiper.display()
 
         else:
             print(
