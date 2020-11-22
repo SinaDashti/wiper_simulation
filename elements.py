@@ -34,13 +34,12 @@ class Switch:
     def __init__(self, state="off"):
         self.state = state
 
-
     def get_state(self):
         return self.state
 
     def move_up(self):
         try:
-            Switch.current_value +=1
+            Switch.current_value += 1
             self.state = Switch.map_values[Switch.current_value]
         except IndexError:
             print("The switch cannot move up more.(switch current mode: fast-wipe)")
@@ -62,7 +61,6 @@ class Switch:
             return Switch.map_values[Switch.current_value]
 
 
-
 class WiperMotor(Component):
     def __init__(self, state="off", working="off"):
         super().__init__(state)
@@ -82,7 +80,7 @@ class Pump(Component):
         self.working = working
 
     def display(self):
-        print(f"The {__class__.__name__} mode is {self.working}.")
+        print(f"The {__class__.__name__} mode is wash.")
 
     def get_state(self):
         return self.working
@@ -107,7 +105,7 @@ class WatterBottle:
 
 
 class SimulationClass:
-    valid_modes = ("off", "intermittent", "wipe", "fast-wipe")
+    valid_modes = ("off", "intermittent", "wipe", "fast-wipe", "wash")
 
     def __init__(self):
         self.battery = Component()
@@ -177,11 +175,12 @@ class SimulationClass:
 
         # the the ECU gets the switch state.
         self.ecu.state = self.switch.get_state()
-
-        Switch.current_value = Switch.map_values.index(self.ecu.is_working())
         self.wiper.working = self.ecu.is_working()
-
-        self.wiper.display()
+        try:
+            Switch.current_value = Switch.map_values.index(self.ecu.is_working())
+            self.wiper.display()
+        except:
+            self.wash()
 
     @decorator_function
     def move_up(self):
@@ -223,14 +222,13 @@ class SimulationClass:
 
     @decorator_function
     def get_state(self):
-        print(f"The switch mode is {self.switch.get_state()}.".upper())
+        print(f"The switch mode  is {self.switch.get_state()}.".upper())
+        print(f"The water  level is {self.watter_bottle.get_level()}.".upper())
 
     @decorator_function
     def wash(self):
         # self.check(self.switch.wash)
-
         self.ecu.state = self.battery.is_working()
-        self.switch.state = "wash"
         if self.ecu.state != "off":
             self.pump.state = self.ecu.is_working()
             self.ecu.state = self.switch.get_state()
